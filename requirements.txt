@@ -1,0 +1,9 @@
+tensorflow==2.21.0
+flask
+numpy
+pandas
+matplotlib
+scikit-learn
+opencv-python
+werkzeug
+reportlab

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pneumonia Detector — Medical AI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 650px;
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0ff;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 26px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section h3 {
+            color: #444;
+            margin-bottom: 15px;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f9f9ff;
+        }
+
+        .upload-area:hover { background: #f0f0ff; }
+
+        .upload-area h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .upload-area p { color: #999; font-size: 13px; }
+
+        input[type="file"] { display: none; }
+
+        .preview {
+            text-align: center;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .preview img {
+            max-width: 180px;
+            border-radius: 10px;
+            border: 3px solid #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin: 8px 0;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102,126,234,0.5);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-pdf {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            padding: 15px;
+            font-size: 16px;
+        }
+
+        .result {
+            padding: 20px;
+            border-radius: 15px;
+            display: none;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .result.pneumonia {
+            background: #ffe0e0;
+            border: 2px solid #ff4444;
+        }
+
+        .result.normal {
+            background: #e0ffe0;
+            border: 2px solid #44aa44;
+        }
+
+        .result h2 { font-size: 22px; margin-bottom: 8px; }
+
+        .confidence {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+
+        .result p { color: #555; font-size: 14px; }
+
+        .patient-summary {
+            background: #f9f9ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 13px;
+            color: #555;
+            display: none;
+            text-align: left;
+        }
+
+        .divider {
+            border: none;
+            border-top: 2px solid #f0f0ff;
+            margin: 20px 0;
+        }
+
+        .footer {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <h1>🏥 Pneumonia Detector</h1>
+        <p>Medical AI — Chest X-Ray Analysis</p>
+        <small style="color:#999">
+            Built by Karunakar 
+        </small>
+    </div>
+
+    <!-- Patient Details -->
+    <div class="section">
+        <h3>👤 Patient Details</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Patient Name *</label>
+                <input type="text"
+                       id="patientName"
+                       placeholder="Enter patient name">
+            </div>
+            <div class="form-group">
+                <label>Age *</label>
+                <input type="number"
+                       id="patientAge"
+                       placeholder="Enter age"
+                       min="1" max="120">
+            </div>
+            <div class="form-group">
+                <label>Gender *</label>
+                <select id="patientGender">
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Doctor Name</label>
+                <input type="text"
+                       id="doctorName"
+                       placeholder="Enter doctor name">
+            </div>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Upload X-Ray -->
+    <div class="section">
+        <h3>🩻 Upload Chest X-Ray</h3>
+        <div class="upload-area"
+             onclick="document.getElementById('fileInput').click()">
+            <h3>📁 Click to Upload X-Ray</h3>
+            <p>Supported formats: JPG, PNG, JPEG</p>
+        </div>
+        <input type="file"
+               id="fileInput"
+               accept=".jpg,.jpeg,.png"
+               onchange="previewImage(this)">
+
+        <!-- Preview -->
+        <div class="preview" id="preview">
+            <br>
+            <p style="color:#666; margin-bottom:8px">
+                Selected X-Ray:
+            </p>
+            <img id="previewImg" src="" alt="X-Ray">
+        </div>
+    </div>
+
+    <!-- Analyze Button -->
+    <button class="btn"
+            id="analyzeBtn"
+            onclick="analyzeXray()"
+            disabled>
+        🔍 Analyze X-Ray
+    </button>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+        ⏳ AI is analyzing X-Ray...
+    </div>
+
+    <!-- Patient Summary -->
+    <div class="patient-summary" id="patientSummary"></div>
+
+    <!-- Result -->
+    <div class="result" id="result">
+        <h2 id="resultTitle"></h2>
+        <div class="confidence" id="confidence"></div>
+        <p id="resultDetails"></p>
+        <p id="recommendation"
+           style="margin-top:8px; font-weight:bold;">
+        </p>
+    </div>
+
+    <!-- Download PDF -->
+    <button class="btn btn-pdf"
+            id="pdfBtn"
+            onclick="downloadPDF()">
+        📄 Download PDF Report
+    </button>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>⚠️ For educational purposes only.</p>
+        <p>Always consult a qualified doctor.</p>
+    </div>
+
+</div>
+
+<script>
+    let selectedFile = null;
+
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            selectedFile = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImg').src =
+                    e.target.result;
+                document.getElementById('preview')
+                    .style.display = 'block';
+                document.getElementById('analyzeBtn')
+                    .disabled = false;
+                document.getElementById('result')
+                    .style.display = 'none';
+                document.getElementById('pdfBtn')
+                    .style.display = 'none';
+                document.getElementById('patientSummary')
+                    .style.display = 'none';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function analyzeXray() {
+        if (!selectedFile) return;
+
+        // Get patient details
+        const name = document.getElementById('patientName').value;
+        const age = document.getElementById('patientAge').value;
+        const gender = document.getElementById('patientGender').value;
+        const doctor = document.getElementById('doctorName').value;
+
+        if (!name || !age || !gender) {
+            alert('Please fill Patient Name, Age and Gender!');
+            return;
+        }
+
+        // Show loading
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('result').style.display = 'none';
+        document.getElementById('pdfBtn').style.display = 'none';
+        document.getElementById('analyzeBtn').disabled = true;
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('patient_name', name);
+        formData.append('patient_age', age);
+        formData.append('patient_gender', gender);
+        formData.append('doctor_name', doctor);
+
+        // Send to Flask
+        fetch('/predict', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('analyzeBtn').disabled = false;
+
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+
+            // Show patient summary
+            const now = new Date().toLocaleString();
+            document.getElementById('patientSummary').innerHTML = `
+                <strong>📋 Patient:</strong> ${name} |
+                <strong>Age:</strong> ${age} |
+                <strong>Gender:</strong> ${gender} |
+                <strong>Doctor:</strong> ${doctor || 'N/A'} |
+                <strong>Date:</strong> ${now}
+            `;
+            document.getElementById('patientSummary')
+                .style.display = 'block';
+
+            // Show result
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+
+            if (data.result === 'PNEUMONIA') {
+                resultDiv.className = 'result pneumonia';
+                document.getElementById('resultTitle')
+                    .innerHTML = '🚨 PNEUMONIA DETECTED';
+                document.getElementById('confidence')
+                    .innerHTML = data.confidence + '%';
+                document.getElementById('confidence')
+                    .style.color = 'red';
+                document.getElementById('resultDetails')
+                    .innerHTML = '⚠️ HIGH RISK';
+                document.getElementById('recommendation')
+                    .innerHTML = data.recommendation;
+            } else {
+                resultDiv.className = 'result normal';
+                document.getElementById('resultTitle')
+                    .innerHTML = '✅ NORMAL';
+                document.getElementById('confidence')
+                    .innerHTML = data.confidence + '%';
+                document.getElementById('confidence')
+                    .style.color = 'green';
+                document.getElementById('resultDetails')
+                    .innerHTML = '✅ LOW RISK';
+                document.getElementById('recommendation')
+                    .innerHTML = data.recommendation;
+            }
+
+            // Show PDF button
+            document.getElementById('pdfBtn')
+                .style.display = 'block';
+        })
+        .catch(error => {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('analyzeBtn').disabled = false;
+            alert('Error analyzing X-Ray! Please try again.');
+        });
+    }
+
+    function downloadPDF() {
+        window.location.href = '/download_pdf';
+    }
+</script>
+</body>
+</html>

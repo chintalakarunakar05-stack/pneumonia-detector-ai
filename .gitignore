@@ -1,0 +1,9 @@
+chest_xray/
+archive.zip
+uploads/
+__pycache__/
+*.pyc
+*.h5
+pneumonia_detector_v2.keras
+pneumonia_detector_v3.keras
+best_pneumonia_model.keras
