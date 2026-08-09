@@ -7,3 +7,4 @@ __pycache__/
 pneumonia_detector_v2.keras
 pneumonia_detector_v3.keras
 best_pneumonia_model.keras
+*.keras
