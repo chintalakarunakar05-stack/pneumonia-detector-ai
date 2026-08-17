@@ -36,3 +36,8 @@ Built as a complete web application using Flask.
 - **PDF Reports** → ReportLab
 
 ## 📁 Project Structure
+## 🆕 Latest Update — August 2026
+- ✅ Upgraded to VGG16 Transfer Learning
+- ✅ New Accuracy: 90.06%
+- ✅ Previous CNN: 88.62%
+- ✅ Improvement: +1.44%
