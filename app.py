@@ -28,11 +28,12 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ================================
-# Load Model
+# Load VGG16 Transfer Learning Model
 # ================================
-print("Loading Medical AI Model...")
-model = keras.models.load_model('pneumonia_detector_final.keras')
+print("Loading VGG16 Transfer Learning Model...")
+model = keras.models.load_model('best_transfer_model.keras')
 print("Model loaded! ✅")
+print("Accuracy: 90.06% — VGG16 Transfer Learning!")
 
 # Store last result for PDF
 last_result = {}
@@ -46,15 +47,17 @@ def allowed_file(filename):
 
 def predict_xray(img_path):
     try:
+        # Load image — RGB for VGG16!
         img = image.load_img(
             img_path,
             target_size=(150, 150),
-            color_mode='grayscale'
+            color_mode='rgb'        # ✅ RGB for VGG16!
         )
         img_array = image.img_to_array(img)
         img_array = img_array / 255.0
         img_array = np.expand_dims(img_array, axis=0)
 
+        # Predict
         prediction = model.predict(img_array, verbose=0)
         probability = float(prediction[0][0])
 
@@ -62,7 +65,7 @@ def predict_xray(img_path):
             result = "PNEUMONIA"
             confidence = round(probability * 100, 2)
             risk = "HIGH RISK"
-            recommendation = "Immediate medical attention required!"
+            recommendation = "Immediate medical attention required! Please consult a doctor immediately."
         else:
             result = "NORMAL"
             confidence = round((1 - probability) * 100, 2)
@@ -77,7 +80,7 @@ def predict_xray(img_path):
         }
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Prediction error: {e}")
         return {"error": str(e)}
 
 def generate_pdf(patient_data, result_data):
@@ -110,6 +113,9 @@ def generate_pdf(patient_data, result_data):
     story.append(Paragraph("🏥 MEDICAL AI REPORT", title_style))
     story.append(Paragraph(
         "Pneumonia Detection — Chest X-Ray Analysis",
+        subtitle_style))
+    story.append(Paragraph(
+        "Powered by VGG16 Transfer Learning — 90.06% Accuracy",
         subtitle_style))
     story.append(Spacer(1, 0.2*inch))
 
@@ -183,6 +189,8 @@ def generate_pdf(patient_data, result_data):
         ['Diagnosis', result],
         ['Confidence Score', f"{confidence}%"],
         ['Risk Level', risk],
+        ['AI Model', 'VGG16 Transfer Learning'],
+        ['Model Accuracy', '90.06%'],
         ['Recommendation', recommendation],
     ]
 
@@ -225,7 +233,8 @@ def generate_pdf(patient_data, result_data):
         alignment=1
     )
     story.append(Paragraph(
-        "Powered by Medical AI — Built by Karunakar | ",
+        "Powered by VGG16 Transfer Learning Medical AI — "
+        "Built by  Chinthala Karunakar | ECE Student ",
         footer_style))
 
     doc.build(story)
@@ -312,9 +321,11 @@ def download_pdf():
 # Run App
 # ================================
 if __name__ == '__main__':
-    print("\n" + "=" * 40)
-    print("   MEDICAL AI WEB APP V2")
-    print("=" * 40)
+    print("\n" + "=" * 45)
+    print("   MEDICAL AI WEB APP — VGG16 UPGRADED!")
+    print("=" * 45)
+    print("Model: VGG16 Transfer Learning")
+    print("Accuracy: 90.06%")
     print("Open → http://localhost:5000")
-    print("=" * 40 + "\n")
+    print("=" * 45 + "\n")
     app.run(debug=True, host='0.0.0.0', port=5000)
